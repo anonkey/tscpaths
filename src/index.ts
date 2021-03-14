@@ -49,7 +49,7 @@ const srcRoot = resolve(src);
 const outRoot = out && resolve(out);
 
 console.log(
-  `tscpaths --project ${configFile} --src ${srcRoot} --out ${outRoot}`
+  `tscpaths --project ${configFile} --src ${srcRoot} --out ${outRoot}`,
 );
 
 const { baseUrl, outDir, paths } = loadConfig(configFile);
@@ -82,7 +82,7 @@ const aliases = Object.keys(paths)
   .map((alias) => ({
     prefix: alias.replace(/\*$/, ''),
     aliasPaths: paths[alias as keyof typeof paths].map((p) =>
-      resolve(basePath, p.replace(/\*$/, ''))
+      resolve(basePath, p.replace(/\*$/, '')),
     ),
   }))
   .filter(({ prefix }) => prefix);
@@ -103,7 +103,10 @@ const absToRel = (modulePath: string, outFile: string): string => {
     const { prefix, aliasPaths } = aliases[j];
 
     if (modulePath.startsWith(prefix)) {
-      const modulePathRel = modulePath.substring(prefix.length);
+      let modulePathRel = modulePath.substring(prefix.length);
+      if (modulePathRel[0] === '/') {
+        modulePathRel = `.${modulePathRel}`;
+      }
       const srcFile = outFileToSrcFile(outFile);
       const outRel = relative(basePath, outFile);
       verboseLog(`${outRel} (source: ${relative(basePath, srcFile)}):`);
@@ -121,8 +124,8 @@ const absToRel = (modulePath: string, outFile: string): string => {
           verboseLog(
             `\treplacing '${modulePath}' -> '${rel}' referencing ${relative(
               basePath,
-              moduleSrc
-            )}`
+              moduleSrc,
+            )}`,
           );
           return rel;
         }
@@ -139,7 +142,7 @@ const importRegex = /(?:import|from) ['"]([^'"]*)['"]/g;
 const replaceImportStatement = (
   orig: string,
   matched: string,
-  outFile: string
+  outFile: string,
 ): string => {
   const index = orig.indexOf(matched);
   return (
@@ -152,10 +155,10 @@ const replaceImportStatement = (
 const replaceAlias = (text: string, outFile: string): string =>
   text
     .replace(requireRegex, (orig, matched) =>
-      replaceImportStatement(orig, matched, outFile)
+      replaceImportStatement(orig, matched, outFile),
     )
     .replace(importRegex, (orig, matched) =>
-      replaceImportStatement(orig, matched, outFile)
+      replaceImportStatement(orig, matched, outFile),
     );
 
 // import relative to absolute path
